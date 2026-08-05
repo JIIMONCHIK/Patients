@@ -1,0 +1,134 @@
+services:
+  db:
+    image: postgres:17
+    container_name: clinic_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-clinic_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clinic_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-clinic_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clinic_user} -d ${POSTGRES_DB:-clinic_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: clinic_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@clinic.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: clinic_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keydb:
+    image: eqalpha/keydb:x86_64_v5.3.3
+    container_name: clinic_keydb
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - keydb_data:/data
+    healthcheck:
+      test: ["CMD", "keydb-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    container_name: clinic_web
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app  # горячая перезагрузка кода
+      - ./alembic:/app/alembic
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keydb:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-clinic_user}:${POSTGRES_PASSWORD:-clinic_pass}@db:5432/${POSTGRES_DB:-clinic_db}
+      - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=redis://keydb:6379/0
+
+  # celery_worker:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.celery
+  #   container_name: clinic_celery_worker
+  #   restart: unless-stopped
+  #   command: celery -A app.celery_app.celery_app worker --loglevel=info
+  #   volumes:
+  #     - ./app:/app/app
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     keydb:
+  #       condition: service_healthy
+  #   environment:
+  #     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-clinic_user}:${POSTGRES_PASSWORD:-clinic_pass}@db:5432/${POSTGRES_DB:-clinic_db}
+  #     - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672//
+  #     - CELERY_RESULT_BACKEND=redis://keydb:6379/0
+
+  # flower:
+  #   image: mher/flower:2.0
+  #   container_name: clinic_flower
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5555:5555"
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - rabbitmq
+  #     - keydb
+  #   environment:
+  #     - CELERY_BROKER_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672//
+  #     - FLOWER_PORT=5555
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  keydb_data:
+  pgadmin_data:
