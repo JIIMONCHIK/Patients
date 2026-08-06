@@ -18,6 +18,7 @@ class DoctorUpdate(BaseModel):
 class DoctorInDBBase(DoctorBase):
     id: uuid.UUID
     user_id: Optional[uuid.UUID] = None
+    specialization_name: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

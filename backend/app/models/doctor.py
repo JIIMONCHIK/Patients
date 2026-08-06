@@ -17,3 +17,7 @@ class Doctor(Base):
     specialization: Mapped[Optional["Specialization"]] = relationship("Specialization", back_populates="doctors")
     slots: Mapped[list["AppointmentSlot"]] = relationship("AppointmentSlot", back_populates="doctor")
     schedule_templates: Mapped[list["ScheduleTemplate"]] = relationship("ScheduleTemplate", back_populates="doctor")
+
+    @property
+    def specialization_name(self) -> Optional[str]:
+        return self.specialization.name if self.specialization else None

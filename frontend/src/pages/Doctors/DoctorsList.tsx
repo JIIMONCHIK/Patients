@@ -30,7 +30,7 @@ const DoctorsList: React.FC = () => {
   const columns = [
     { title: 'ФИО', dataIndex: 'full_name', key: 'full_name' },
     { title: 'Кабинет', dataIndex: 'cabinet', key: 'cabinet' },
-    { title: 'ID специализации', dataIndex: 'specialization_id', key: 'specialization_id' },
+    { title: 'Специализация', dataIndex: 'specialization_name', key: 'specialization_name' },
     {
       title: 'Действия',
       key: 'actions',

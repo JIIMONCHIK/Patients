@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType } from '../types';
 import { login as apiLogin, getMe } from '../api/auth';
-import apiClient from '../api/axios';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // true при старте и во время логина
 
+  // При загрузке страницы проверяем, есть ли токен
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
@@ -22,16 +22,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await apiLogin(email, password);
-    localStorage.setItem('access_token', res.data.access_token);
-    // Получаем пользователя через /auth/me
-    const me = await getMe();
-    setUser(me.data);
+    setLoading(true); // начинаем загрузку
+    try {
+      const res = await apiLogin(email, password);
+      localStorage.setItem('access_token', res.data.access_token);
+      const me = await getMe();
+      setUser(me.data);
+    } finally {
+      setLoading(false); // загрузка завершена
+    }
   };
 
   const logout = () => {
     localStorage.removeItem('access_token');
     setUser(null);
+    setLoading(false);
   };
 
   return (
