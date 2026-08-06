@@ -1,12 +1,12 @@
 from fastapi import APIRouter
-from backend.app.api.v1.endpoints import patients
-from backend.app.api.v1.endpoints import auth
-from backend.app.api.v1.endpoints import specializations
-from backend.app.api.v1.endpoints import doctors
+from app.api.v1.endpoints import patients
+from app.api.v1.endpoints import auth
+from app.api.v1.endpoints import specializations
+from app.api.v1.endpoints import doctors
 from app.api.v1.endpoints import schedules
 from app.api.v1.endpoints import slots
-from backend.app.api.v1.endpoints import medical_records
-from backend.app.api.v1.endpoints import appointments
+from app.api.v1.endpoints import medical_records
+from app.api.v1.endpoints import appointments
 
 
 api_router = APIRouter()

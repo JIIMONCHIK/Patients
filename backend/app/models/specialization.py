@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from backend.app.models.base import Base
+from app.models.base import Base
 
 class Specialization(Base):
     __tablename__ = "specializations"

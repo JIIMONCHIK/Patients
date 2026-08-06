@@ -1,9 +1,9 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from backend.app.models.user import User
-from backend.app.core.security import get_password_hash, verify_password
-from backend.app.schemas.auth import UserCreate
+from app.models.user import User
+from app.core.security import get_password_hash, verify_password
+from app.schemas.auth import UserCreate
 
 class CRUDUser:
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:

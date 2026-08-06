@@ -2,14 +2,14 @@ from typing import Any, List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.models.user import User, UserRole
-from backend.app.api.dependencies import get_db, get_current_active_user, require_role
-from backend.app.schemas.appointment import Appointment, AppointmentCreate, AppointmentUpdate
-from backend.app.crud.appointment import appointment
+from app.models.user import User, UserRole
+from app.api.dependencies import get_db, get_current_active_user, require_role
+from app.schemas.appointment import Appointment, AppointmentCreate, AppointmentUpdate
+from app.crud.appointment import appointment
 
 router = APIRouter()
 
-@router.get("/", response_model=List[Appointment])
+@router.get("", response_model=List[Appointment])
 async def read_appointments(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
@@ -21,7 +21,7 @@ async def read_appointments(
     # В реальности нужно фильтровать: пациент видит свои, врач — свои
     return await appointment.get_multi(db, skip=skip, limit=limit)
 
-@router.post("/", response_model=Appointment, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Appointment, status_code=status.HTTP_201_CREATED)
 async def create_appointment(
     *,
     db: AsyncSession = Depends(get_db),

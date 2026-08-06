@@ -1,6 +1,6 @@
-from backend.app.crud.base import CRUDBase
-from backend.app.models.schedule import ScheduleTemplate
-from backend.app.schemas.schedule import ScheduleTemplateCreate, ScheduleTemplateUpdate
+from app.crud.base import CRUDBase
+from app.models.schedule import ScheduleTemplate
+from app.schemas.schedule import ScheduleTemplateCreate, ScheduleTemplateUpdate
 
 class CRUDScheduleTemplate(CRUDBase[ScheduleTemplate, ScheduleTemplateCreate, ScheduleTemplateUpdate]):
     pass

@@ -9,7 +9,7 @@ from app.crud.slot import appointment_slot
 
 router = APIRouter()
 
-@router.get("/", response_model=List[AppointmentSlot])
+@router.get("", response_model=List[AppointmentSlot])
 async def read_slots(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
@@ -18,7 +18,7 @@ async def read_slots(
 ) -> Any:
     return await appointment_slot.get_multi(db, skip=skip, limit=limit)
 
-@router.post("/", response_model=AppointmentSlot, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=AppointmentSlot, status_code=status.HTTP_201_CREATED)
 async def create_slot(
     *,
     db: AsyncSession = Depends(get_db),

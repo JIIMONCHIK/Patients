@@ -9,7 +9,7 @@ from app.crud.schedule import schedule_template
 
 router = APIRouter()
 
-@router.get("/", response_model=List[ScheduleTemplate])
+@router.get("", response_model=List[ScheduleTemplate])
 async def read_schedules(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
@@ -18,7 +18,7 @@ async def read_schedules(
 ) -> Any:
     return await schedule_template.get_multi(db, skip=skip, limit=limit)
 
-@router.post("/", response_model=ScheduleTemplate, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ScheduleTemplate, status_code=status.HTTP_201_CREATED)
 async def create_schedule(
     *,
     db: AsyncSession = Depends(get_db),

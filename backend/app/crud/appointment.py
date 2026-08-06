@@ -1,10 +1,10 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from backend.app.crud.base import CRUDBase
-from backend.app.models.appointment import Appointment, AppointmentStatus
-from backend.app.models.slot import AppointmentSlot
-from backend.app.schemas.appointment import AppointmentCreate, AppointmentUpdate
+from app.crud.base import CRUDBase
+from app.models.appointment import Appointment, AppointmentStatus
+from app.models.slot import AppointmentSlot
+from app.schemas.appointment import AppointmentCreate, AppointmentUpdate
 
 class CRUDAppointment(CRUDBase[Appointment, AppointmentCreate, AppointmentUpdate]):
     async def create(self, db: AsyncSession, *, obj_in: AppointmentCreate) -> Appointment:

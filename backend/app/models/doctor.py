@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from backend.app.models.base import Base
+from app.models.base import Base
 from typing import Optional
 
 class Doctor(Base):

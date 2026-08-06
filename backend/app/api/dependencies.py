@@ -2,13 +2,13 @@ from typing import AsyncGenerator
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal
 from jose import JWTError, jwt
-from backend.app.core.security import ALGORITHM
+from app.core.security import ALGORITHM
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from backend.app.core.config import settings
-from backend.app.models.user import User, UserRole
-from backend.app.crud.user import user as crud_user
+from app.core.config import settings
+from app.models.user import User, UserRole
+from app.crud.user import user as crud_user
 import uuid
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

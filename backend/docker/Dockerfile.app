@@ -17,7 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY backend/app ./app
+COPY backend/alembic ./alembic
+COPY backend/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

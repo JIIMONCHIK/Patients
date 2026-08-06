@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from backend.app.core.config import settings
-from backend.app.api.v1.router import api_router
+from app.core.config import settings
+from app.api.v1.router import api_router
 
 app = FastAPI(
     title="Clinic Patient Management System",

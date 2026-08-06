@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import uuid
-from backend.app.models.appointment import AppointmentStatus
+from app.models.appointment import AppointmentStatus
 
 class AppointmentBase(BaseModel):
     slot_id: uuid.UUID

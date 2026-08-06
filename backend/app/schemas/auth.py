@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from backend.app.models.user import UserRole
+from app.models.user import UserRole
+import uuid
 
 class Token(BaseModel):
     access_token: str
@@ -21,7 +22,7 @@ class UserLogin(BaseModel):
     password: str
 
 class UserInDBBase(BaseModel):
-    id: str
+    id: uuid.UUID
     email: str
     role: UserRole
     is_active: bool
