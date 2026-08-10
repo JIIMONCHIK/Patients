@@ -1,4 +1,5 @@
-from typing import Any, List
+from typing import Any, List, Optional
+from datetime import datetime
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,17 +20,39 @@ async def read_appointments(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
+    patient_id: Optional[UUID] = None,
+    doctor_id: Optional[UUID] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
-    result = await db.execute(
-        select(AppointmentModel)
-        .options(
-            selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
-            selectinload(AppointmentModel.patient)
-        )
-        .offset(skip)
-        .limit(limit)
-    )
+    query = select(AppointmentModel)
+
+    if patient_id:
+        query = query.where(AppointmentModel.patient_id == patient_id)
+
+    if doctor_id:
+        # Присоединяем слот, чтобы фильтровать по врачу
+        query = query.join(AppointmentModel.slot).where(AppointmentSlot.doctor_id == doctor_id)
+
+    if date_from:
+        # Если ещё нет join со слотом, добавляем
+        if not doctor_id:  # если уже нет join
+            query = query.join(AppointmentModel.slot)
+        query = query.where(AppointmentSlot.start_datetime >= date_from)
+
+    if date_to:
+        if not doctor_id and not date_from:  # если нет join
+            query = query.join(AppointmentModel.slot)
+        query = query.where(AppointmentSlot.start_datetime <= date_to)
+
+    # Подгружаем связи
+    query = query.options(
+        selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
+        selectinload(AppointmentModel.patient)
+    ).offset(skip).limit(limit)
+
+    result = await db.execute(query)
     appointments = result.unique().scalars().all()
 
     response = []
