@@ -48,6 +48,10 @@ export interface Appointment {
   patient_id: string;
   status: 'booked' | 'cancelled' | 'completed';
   created_at: string;
+  patient_name?: string | null;
+  doctor_name?: string | null;
+  start_datetime?: string | null;
+  end_datetime?: string | null;
 }
 
 export interface MedicalRecord {

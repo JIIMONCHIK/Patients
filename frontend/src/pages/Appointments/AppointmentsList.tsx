@@ -3,6 +3,7 @@ import { Table, Button, Popconfirm, message, Space, Tag } from 'antd';
 import { getAppointments, cancelAppointment } from '../../api/appointments';
 import { Appointment } from '../../types';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 
 const statusColors: any = { booked: 'blue', cancelled: 'red', completed: 'green' };
 
@@ -27,20 +28,24 @@ const AppointmentsList: React.FC = () => {
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id' },
-    { title: 'Слот', dataIndex: 'slot_id', key: 'slot_id' },
-    { title: 'Пациент', dataIndex: 'patient_id', key: 'patient_id' },
+    { title: 'Пациент', dataIndex: 'patient_name', key: 'patient_name' },
+    { title: 'Врач', dataIndex: 'doctor_name', key: 'doctor_name' },
+    {
+      title: 'Дата и время',
+      key: 'datetime',
+      render: (_: any, record: Appointment) => (
+        <span>
+          {record.start_datetime
+            ? `${dayjs(record.start_datetime).format('DD.MM.YYYY HH:mm')} – ${dayjs(record.end_datetime).format('HH:mm')}`
+            : '—'}
+        </span>
+      ),
+    },
     {
       title: 'Статус',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => <Tag color={statusColors[status]}>{status}</Tag>,
-    },
-    {
-      title: 'Дата создания',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (d: string) => new Date(d).toLocaleString(),
     },
     {
       title: 'Действия',
@@ -56,7 +61,7 @@ const AppointmentsList: React.FC = () => {
       ),
     },
   ];
-
+  
   return (
     <div>
       <Button type="primary" onClick={() => navigate('/appointments/new')} style={{ marginBottom: 16 }}>

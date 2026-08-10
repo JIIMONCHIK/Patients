@@ -4,23 +4,48 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User, UserRole
 from app.api.dependencies import get_db, get_current_active_user, require_role
-from app.schemas.appointment import Appointment, AppointmentCreate, AppointmentUpdate
+from app.schemas.appointment import Appointment, AppointmentCreate, AppointmentUpdate, AppointmentResponse
 from app.crud.appointment import appointment
 from app.models.patient import PatientProfile
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.models.slot import AppointmentSlot
+from app.models.appointment import Appointment as AppointmentModel
 
 router = APIRouter()
 
-@router.get("", response_model=List[Appointment])
+@router.get("", response_model=List[AppointmentResponse])
 async def read_appointments(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
-    # В зависимости от роли показываем разные наборы
-    # Пока упростим: все авторизованные видят все записи (для теста)
-    # В реальности нужно фильтровать: пациент видит свои, врач — свои
-    return await appointment.get_multi(db, skip=skip, limit=limit)
+    result = await db.execute(
+        select(AppointmentModel)
+        .options(
+            selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
+            selectinload(AppointmentModel.patient)
+        )
+        .offset(skip)
+        .limit(limit)
+    )
+    appointments = result.unique().scalars().all()
+
+    response = []
+    for a in appointments:
+        response.append({
+            "id": a.id,
+            "slot_id": a.slot_id,
+            "patient_id": a.patient_id,
+            "status": a.status,
+            "created_at": a.created_at,
+            "patient_name": a.patient.full_name if a.patient else None,
+            "doctor_name": a.slot.doctor.full_name if a.slot and a.slot.doctor else None,
+            "start_datetime": a.slot.start_datetime if a.slot else None,
+            "end_datetime": a.slot.end_datetime if a.slot else None,
+        })
+    return response
 
 @router.post("", response_model=Appointment, status_code=status.HTTP_201_CREATED)
 async def create_appointment(
@@ -47,17 +72,36 @@ async def create_appointment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{appointment_id}", response_model=Appointment)
+@router.get("/{appointment_id}", response_model=AppointmentResponse)
 async def read_appointment(
     *,
     db: AsyncSession = Depends(get_db),
     appointment_id: UUID,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
-    appt = await appointment.get(db, id=appointment_id)
-    if not appt:
+    result = await db.execute(
+        select(AppointmentModel)
+        .options(
+            selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
+            selectinload(AppointmentModel.patient)
+        )
+        .where(AppointmentModel.id == appointment_id)
+    )
+    a = result.scalars().first()
+    if not a:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    return appt
+
+    return {
+        "id": a.id,
+        "slot_id": a.slot_id,
+        "patient_id": a.patient_id,
+        "status": a.status,
+        "created_at": a.created_at,
+        "patient_name": a.patient.full_name if a.patient else None,
+        "doctor_name": a.slot.doctor.full_name if a.slot and a.slot.doctor else None,
+        "start_datetime": a.slot.start_datetime if a.slot else None,
+        "end_datetime": a.slot.end_datetime if a.slot else None,
+    }
 
 @router.put("/{appointment_id}", response_model=Appointment)
 async def update_appointment(

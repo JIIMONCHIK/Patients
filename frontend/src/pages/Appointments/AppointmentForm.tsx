@@ -12,7 +12,7 @@ const AppointmentForm: React.FC = () => {
 
   useEffect(() => {
     getPatients().then((res) => setPatients(res.data));
-    // getAvailableSlots()... пока опустим
+    // getAvailableSlots()...
   }, []);
 
   const onFinish = async (values: any) => {

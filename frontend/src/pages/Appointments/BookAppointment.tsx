@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
-  Card, Row, Col, Button, Spin, message, Typography, List, Tag, Divider,
+  Card, Row, Col, Button, Spin, message, Typography, List, Tag, Divider, Select,
 } from 'antd';
 import { CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { getDoctors } from '../../api/doctors';
 import { getSlots } from '../../api/slots';
+import { getPatients } from '../../api/patients';
 import { createAppointment } from '../../api/appointments';
-import { Doctor, AppointmentSlot } from '../../types';
+import { Doctor, AppointmentSlot, Patient } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import dayjs from 'dayjs';
 
@@ -15,13 +16,21 @@ const { Title, Text } = Typography;
 const BookAppointment: React.FC = () => {
   const { user } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | undefined>(
+    user?.role === 'patient' && user.id ? user.id : undefined
+  );
   const [slots, setSlots] = useState<AppointmentSlot[]>([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   useEffect(() => {
     fetchDoctors();
+    // Если пользователь не пациент, загружаем список пациентов
+    if (user?.role !== 'patient') {
+      fetchPatients();
+    }
   }, []);
 
   const fetchDoctors = async () => {
@@ -34,12 +43,20 @@ const BookAppointment: React.FC = () => {
     }
   };
 
+  const fetchPatients = async () => {
+    try {
+      const res = await getPatients();
+      setPatients(res.data);
+    } catch (err) {
+      message.error('Не удалось загрузить список пациентов');
+    }
+  };
+
   const handleSelectDoctor = async (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setLoadingSlots(true);
     try {
       const res = await getSlots({ doctor_id: doctor.id, is_available: true });
-      // Сортируем по дате и времени
       const sorted = res.data.sort((a: AppointmentSlot, b: AppointmentSlot) =>
         dayjs(a.start_datetime).diff(dayjs(b.start_datetime))
       );
@@ -50,18 +67,23 @@ const BookAppointment: React.FC = () => {
   };
 
   const handleBookSlot = async (slot: AppointmentSlot) => {
+    if (user?.role !== 'patient' && !selectedPatientId) {
+      message.warning('Пожалуйста, выберите пациента');
+      return;
+    }
     try {
-      await createAppointment({ slot_id: slot.id }); // patient_id не нужен для пациента
-      message.success('Вы успешно записаны на приём!');
-      // Обновить слоты: убрать этот слот
+      await createAppointment({
+        slot_id: slot.id,
+        patient_id: selectedPatientId, // для пациента будет свой id, для админа – выбранный
+      });
+      message.success('Запись создана');
+      // Убираем занятый слот из списка
       setSlots(slots.filter(s => s.id !== slot.id));
-      // Сбросить выбранного врача или оставить – на ваше усмотрение
     } catch (err: any) {
       message.error(err.response?.data?.detail || 'Ошибка записи');
     }
   };
 
-  // Группировка слотов по дате
   const groupedSlots = slots.reduce((acc: Record<string, AppointmentSlot[]>, slot) => {
     const dateKey = dayjs(slot.start_datetime).format('YYYY-MM-DD');
     if (!acc[dateKey]) acc[dateKey] = [];
@@ -72,6 +94,24 @@ const BookAppointment: React.FC = () => {
   return (
     <div>
       <Title level={2}>Запись на приём</Title>
+      {user?.role !== 'patient' && (
+        <div style={{ marginBottom: 16 }}>
+          <Text strong>Пациент: </Text>
+          <Select
+            showSearch
+            placeholder="Выберите пациента"
+            style={{ width: 300, textAlign: 'left', }}
+            value={selectedPatientId}
+            onChange={setSelectedPatientId}
+          >
+            {patients.map((p) => (
+              <Select.Option key={p.id} value={p.id}>
+                {p.full_name}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+      )}
       {!selectedDoctor ? (
         <>
           <Title level={3}>Выберите врача</Title>
@@ -84,7 +124,7 @@ const BookAppointment: React.FC = () => {
                   <Card
                     hoverable
                     onClick={() => handleSelectDoctor(doc)}
-                    actions={[<Button type="primary">Выбрать время</Button>]}
+                    actions={[<Button type="primary">Выбрать слоты</Button>]}
                   >
                     <Card.Meta
                       title={doc.full_name}
@@ -107,7 +147,9 @@ const BookAppointment: React.FC = () => {
             ← Назад к списку врачей
           </Button>
           <Title level={3}>{selectedDoctor.full_name}</Title>
-          <Text type="secondary">{selectedDoctor.specialization_name} · Кабинет {selectedDoctor.cabinet}</Text>
+          <Text type="secondary">
+            {selectedDoctor.specialization_name} · Кабинет {selectedDoctor.cabinet}
+          </Text>
           <Divider />
           {loadingSlots ? (
             <Spin size="large" />
