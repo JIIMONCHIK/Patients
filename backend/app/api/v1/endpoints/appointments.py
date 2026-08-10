@@ -6,6 +6,7 @@ from app.models.user import User, UserRole
 from app.api.dependencies import get_db, get_current_active_user, require_role
 from app.schemas.appointment import Appointment, AppointmentCreate, AppointmentUpdate
 from app.crud.appointment import appointment
+from app.models.patient import PatientProfile
 
 router = APIRouter()
 
@@ -28,14 +29,19 @@ async def create_appointment(
     appointment_in: AppointmentCreate,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
-    # Проверка прав: пациент может записывать только себя, регистратор/админ — любого
     if current_user.role == UserRole.PATIENT:
-        # Пациент должен иметь patient_profile и его id должен совпадать с appointment_in.patient_id
-        if not current_user.patient_profile or current_user.patient_profile.id != appointment_in.patient_id:
-            raise HTTPException(status_code=403, detail="You can only book appointments for yourself")
-    elif current_user.role not in [UserRole.ADMIN, UserRole.REGISTRAR]:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+        if not current_user.patient_profile:
+            raise HTTPException(status_code=400, detail="Patient profile not found")
+        # Пациент может записывать только себя
+        appointment_in.patient_id = current_user.patient_profile.id
+    else:
+        # Админ/регистратор: patient_id обязателен
+        if not appointment_in.patient_id:
+            raise HTTPException(status_code=400, detail="patient_id is required")
+        # Проверка существования пациента
+        patient = await db.get(PatientProfile, appointment_in.patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
     try:
         return await appointment.create(db, obj_in=appointment_in)
     except ValueError as e:

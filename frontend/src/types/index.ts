@@ -24,6 +24,7 @@ export interface Doctor {
   id: string;
   full_name: string;
   specialization_id?: string | null;
+  specialization_name?: string | null;
   cabinet?: string;
   user_id?: string | null;
 }
