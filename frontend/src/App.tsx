@@ -14,7 +14,7 @@ import SpecializationsList from './pages/Specializations/SpecializationsList';
 import AppointmentsList from './pages/Appointments/AppointmentsList';
 import MedicalRecordsList from './pages/MedicalRecords/MedicalRecordsList';
 import BookAppointment from './pages/Appointments/BookAppointment';
-// При необходимости MedicalRecordForm
+import ProfilePage from './pages/Profile/ProfilePage';
 
 const App = () => {
   return (
@@ -109,6 +109,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['admin', 'registrar', 'doctor', 'patient']}>
                     <BookAppointment />
+                  </ProtectedRoute>
+                }
+              />
+                <Route
+                path="profile"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'doctor', 'patient']}>
+                    <ProfilePage />
                   </ProtectedRoute>
                 }
               />

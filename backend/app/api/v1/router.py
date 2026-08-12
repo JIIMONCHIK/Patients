@@ -7,6 +7,7 @@ from app.api.v1.endpoints import schedules
 from app.api.v1.endpoints import slots
 from app.api.v1.endpoints import medical_records
 from app.api.v1.endpoints import appointments
+from app.api.v1.endpoints import profile
 
 
 api_router = APIRouter()
@@ -18,3 +19,4 @@ api_router.include_router(schedules.router, prefix="/schedules", tags=["schedule
 api_router.include_router(slots.router, prefix="/slots", tags=["slots"])
 api_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
 api_router.include_router(medical_records.router, prefix="/medical-records", tags=["medical_records"])
+api_router.include_router(profile.router, prefix="/profile", tags=["profile"])

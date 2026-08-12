@@ -76,3 +76,37 @@ export interface Specialization {
   id: string;
   name: string;
 }
+
+export interface ProfileResponse {
+  id: string;
+  email: string;
+  role: string;
+  patient_full_name?: string | null;
+  phone?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  address?: string | null;
+  policy_number?: string | null;
+  blood_group?: string | null;
+  allergies?: string | null;
+  chronic_diseases?: string | null;
+  doctor_full_name?: string | null;
+  specialization_id?: string | null;
+  specialization_name?: string | null;
+  cabinet?: string | null;
+}
+
+export interface ProfileUpdate {
+  email?: string;
+  full_name?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  policy_number?: string;
+  blood_group?: string;
+  allergies?: string;
+  chronic_diseases?: string;
+  specialization_id?: string;
+  cabinet?: string;
+}

@@ -34,6 +34,7 @@ const MainLayout: React.FC = () => {
     ...(user?.role === 'patient' ? [
       { key: '/appointments', icon: <CalendarOutlined />, label: 'Мои записи' },
     ] : []),
+    { key: '/profile', icon: <UserOutlined />, label: 'Профиль' },
   ];
 
   const handleLogout = () => { logout(); navigate('/login'); };
