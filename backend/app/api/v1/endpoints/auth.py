@@ -9,6 +9,10 @@ from jose import JWTError, jwt
 from fastapi.security import HTTPAuthorizationCredentials
 from app.core.config import settings
 import uuid
+from app.models.patient import PatientProfile
+from app.models.doctor import Doctor
+from app.models.user import UserRole
+from app.models.specialization import Specialization
 
 router = APIRouter()
 
@@ -26,6 +30,31 @@ async def register(
             detail="User with this email already exists",
         )
     user = await crud_user.create(db, obj_in=user_in)
+
+    # Автоматически создаём профиль в зависимости от роли
+    if user.role == UserRole.PATIENT:
+        profile = PatientProfile(
+            user_id=user.id,
+            full_name=user_in.full_name,
+            phone=user_in.phone,
+            birth_date=user_in.birth_date,
+        )
+        db.add(profile)
+    elif user.role == UserRole.DOCTOR:
+        # Если указана специализация, проверяем её существование
+        if user_in.specialization_id:
+            spec = await db.get(Specialization, user_in.specialization_id)
+            if not spec:
+                raise HTTPException(status_code=400, detail="Specialization not found")
+        doctor = Doctor(
+            user_id=user.id,
+            full_name=user_in.full_name,
+            specialization_id=user_in.specialization_id,
+            cabinet=user_in.cabinet,
+        )
+        db.add(doctor)
+
+    await db.commit()
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     return {

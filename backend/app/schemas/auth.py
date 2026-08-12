@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from app.models.user import UserRole
 import uuid
+from datetime import datetime
 
 class Token(BaseModel):
     access_token: str
@@ -15,6 +16,14 @@ class TokenPayload(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
+    full_name: str = Field(..., min_length=1, max_length=255)
+     # Дополнительные поля для пациента
+    phone: Optional[str] = None
+    birth_date: Optional[datetime] = None
+    # Для врача
+    specialization_id: Optional[uuid.UUID] = None
+    cabinet: Optional[str] = None
+
     role: UserRole = UserRole.PATIENT  # по умолчанию пациент
 
 class UserLogin(BaseModel):
