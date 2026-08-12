@@ -6,7 +6,7 @@ from app.models.appointment import AppointmentStatus
 
 class AppointmentBase(BaseModel):
     slot_id: uuid.UUID
-    patient_id: uuid.UUID
+    patient_id: Optional[uuid.UUID] = None
     status: Optional[AppointmentStatus] = AppointmentStatus.BOOKED
 
 class AppointmentCreate(AppointmentBase):
