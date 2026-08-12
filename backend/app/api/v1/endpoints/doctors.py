@@ -8,7 +8,10 @@ from app.schemas.doctor import Doctor, DoctorCreate, DoctorUpdate
 from app.models.doctor import Doctor as DoctorModel 
 from app.crud.doctor import doctor
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select
+from sqlalchemy import select, func, exists
+from typing import Optional
+from datetime import datetime, timezone
+from app.models.slot import AppointmentSlot
 
 router = APIRouter()
 
@@ -17,16 +20,28 @@ async def read_doctors(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
+    specialization_id: Optional[UUID] = None,
+    has_available_slots: Optional[bool] = None,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
-    result = await db.execute(
-        select(DoctorModel)
-        .options(selectinload(DoctorModel.specialization))
-        .offset(skip)
-        .limit(limit)
-    )
-    doctors = result.scalars().all()
-    return doctors
+    query = select(DoctorModel).options(selectinload(DoctorModel.specialization))
+
+    if specialization_id:
+        query = query.where(DoctorModel.specialization_id == specialization_id)
+
+    if has_available_slots is True:
+        future_slot_exists = exists(
+            select(AppointmentSlot.id).where(
+                AppointmentSlot.doctor_id == DoctorModel.id,
+                AppointmentSlot.is_available.is_(True),
+                AppointmentSlot.start_datetime > datetime.now(timezone.utc)
+            )
+        )
+        query = query.where(future_slot_exists)
+
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().unique().all()
 
 @router.post("", response_model=Doctor, status_code=status.HTTP_201_CREATED)
 async def create_doctor(

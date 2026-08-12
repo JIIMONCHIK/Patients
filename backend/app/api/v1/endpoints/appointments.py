@@ -32,6 +32,22 @@ async def read_appointments(
 ) -> Any:
     query = select(AppointmentModel)
 
+    if current_user.role == UserRole.PATIENT:
+        patient_profile = await db.scalar(
+            select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+        )
+        if not patient_profile:
+            raise HTTPException(status_code=400, detail="Patient profile not found")
+        patient_id = patient_profile.id  # принудительный фильтр
+
+    if current_user.role == UserRole.DOCTOR:
+        doctor = await db.scalar(
+            select(DoctorModel).where(DoctorModel.user_id == current_user.id)
+        )
+        if not doctor:
+            raise HTTPException(status_code=400, detail="Doctor profile not found")
+        doctor_id = doctor.id
+        
     if patient_id:
         query = query.where(AppointmentModel.patient_id == patient_id)
 
@@ -89,10 +105,12 @@ async def create_appointment(
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     if current_user.role == UserRole.PATIENT:
-        if not current_user.patient_profile:
+        patient_profile = await db.scalar(
+            select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+        )
+        if not patient_profile:
             raise HTTPException(status_code=400, detail="Patient profile not found")
-        # Пациент может записывать только себя
-        appointment_in.patient_id = current_user.patient_profile.id
+        appointment_in.patient_id = patient_profile.id
     else:
         # Админ/регистратор: patient_id обязателен
         if not appointment_in.patient_id:
@@ -162,7 +180,10 @@ async def cancel_appointment(
         raise HTTPException(status_code=404, detail="Appointment not found")
     # Проверка прав: отменить может только пациент, чья запись, или админ/регистратор
     if current_user.role == UserRole.PATIENT:
-        if not current_user.patient_profile or current_user.patient_profile.id != appt.patient_id:
+        patient_profile = await db.scalar(
+            select(PatientProfile).where(PatientProfile.user_id == current_user.id)
+        )
+        if not patient_profile or patient_profile.id != appt.patient_id:
             raise HTTPException(status_code=403, detail="Not your appointment")
     elif current_user.role not in [UserRole.ADMIN, UserRole.REGISTRAR]:
         raise HTTPException(status_code=403, detail="Not enough permissions")

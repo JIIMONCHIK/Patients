@@ -1,4 +1,4 @@
-import { Layout, Menu, Button, Avatar, Dropdown, Form } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -25,7 +25,7 @@ const MainLayout: React.FC = () => {
       { key: '/doctors', icon: <TeamOutlined />, label: 'Врачи' },
       { key: '/specializations', icon: <MedicineBoxOutlined />, label: 'Специализации' },
       { key: '/appointments', icon: <CalendarOutlined />, label: 'Приёмы' },
-      { key: '/appointments/book', icon: <Form />, label: 'Записаться на приём' },
+      { key: '/appointments/book', icon: <CalendarOutlined />, label: 'Записаться на приём' },
     ] : []),
     ...(user?.role === 'doctor' ? [
       { key: '/appointments', icon: <CalendarOutlined />, label: 'Мои приёмы' },
@@ -33,6 +33,7 @@ const MainLayout: React.FC = () => {
     ] : []),
     ...(user?.role === 'patient' ? [
       { key: '/appointments', icon: <CalendarOutlined />, label: 'Мои записи' },
+      { key: '/appointments/book', icon: <CalendarOutlined />, label: 'Записаться на приём' },
     ] : []),
     { key: '/profile', icon: <UserOutlined />, label: 'Профиль' },
   ];

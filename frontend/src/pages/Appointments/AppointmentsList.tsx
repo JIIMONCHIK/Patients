@@ -149,62 +149,66 @@ const AppointmentsList: React.FC = () => {
     <div>
       <Card style={{ marginBottom: 16 }}>
         <Row gutter={[16, 16]} align="middle">
-          <Col>
-            <Select
-              allowClear
-              placeholder="Все пациенты"
-              style={{ width: 220, textAlign: 'left' }}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
-              }
-              value={selectedPatient}
-              onChange={(val) => {
-                setSelectedPatient(val);
-                updateFilters();
-              }}
-            >
-              {patients.map(p => (
-                <Select.Option key={p.id} value={p.id}>{p.full_name}</Select.Option>
-              ))}
-            </Select>
-          </Col>
-          <Col>
-            <Select
-              allowClear
-              placeholder="Все врачи"
-              style={{ width: 220, textAlign: 'left' }}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
-              }
-              value={selectedDoctor}
-              onChange={(val) => {
-                setSelectedDoctor(val);
-                updateFilters();
-              }}
-            >
-              {doctors.map(d => (
-                <Select.Option key={d.id} value={d.id}>{d.full_name}</Select.Option>
-              ))}
-            </Select>
-          </Col>
-          <Col>
-            <Select
-              allowClear
-              placeholder="Все специализации"
-              style={{ width: 220 }}
-              value={selectedSpecialization}
-              onChange={(val) => {
-                setSelectedSpecialization(val);
-                updateFilters();
-              }}
-            >
-              {specializations.map(s => (
-                <Select.Option key={s.id} value={s.id}>{s.name}</Select.Option>
-              ))}
-            </Select>
-          </Col>
+          {(user?.role === 'admin' || user?.role === 'registrar') && (
+            <>
+            <Col>
+              <Select
+                allowClear
+                placeholder="Все пациенты"
+                style={{ width: 220, textAlign: 'left' }}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                }
+                value={selectedPatient}
+                onChange={(val) => {
+                  setSelectedPatient(val);
+                  updateFilters();
+                }}
+              >
+                {patients.map(p => (
+                  <Select.Option key={p.id} value={p.id}>{p.full_name}</Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col>
+              <Select
+                allowClear
+                placeholder="Все врачи"
+                style={{ width: 220, textAlign: 'left' }}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                }
+                value={selectedDoctor}
+                onChange={(val) => {
+                  setSelectedDoctor(val);
+                  updateFilters();
+                }}
+              >
+                {doctors.map(d => (
+                  <Select.Option key={d.id} value={d.id}>{d.full_name}</Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col>
+              <Select
+                allowClear
+                placeholder="Все специализации"
+                style={{ width: 220 }}
+                value={selectedSpecialization}
+                onChange={(val) => {
+                  setSelectedSpecialization(val);
+                  updateFilters();
+                }}
+              >
+                {specializations.map(s => (
+                  <Select.Option key={s.id} value={s.id}>{s.name}</Select.Option>
+                ))}
+              </Select>
+            </Col>
+            </>
+          )}
           <Col>
             <RangePicker
               value={dateRange}
