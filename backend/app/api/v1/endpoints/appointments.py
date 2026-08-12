@@ -12,6 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.models.slot import AppointmentSlot
 from app.models.appointment import Appointment as AppointmentModel
+from app.models.doctor import Doctor as DoctorModel
+from app.models.appointment import AppointmentStatus
 
 router = APIRouter()
 
@@ -24,6 +26,8 @@ async def read_appointments(
     doctor_id: Optional[UUID] = None,
     date_from: Optional[datetime] = None,
     date_to: Optional[datetime] = None,
+    specialization_id: Optional[UUID] = None,
+    status: Optional[AppointmentStatus] = None,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     query = select(AppointmentModel)
@@ -31,27 +35,34 @@ async def read_appointments(
     if patient_id:
         query = query.where(AppointmentModel.patient_id == patient_id)
 
-    if doctor_id:
-        # Присоединяем слот, чтобы фильтровать по врачу
-        query = query.join(AppointmentModel.slot).where(AppointmentSlot.doctor_id == doctor_id)
+    slot_joined = False
+    doctor_joined = False
 
-    if date_from:
-        # Если ещё нет join со слотом, добавляем
-        if not doctor_id:  # если уже нет join
+    if doctor_id or date_from or date_to or specialization_id:
+        query = query.join(AppointmentModel.slot)
+        slot_joined = True
+
+        if doctor_id:
+            query = query.where(AppointmentSlot.doctor_id == doctor_id)
+        if date_from:
+            query = query.where(AppointmentSlot.start_datetime >= date_from)
+        if date_to:
+            query = query.where(AppointmentSlot.start_datetime <= date_to)
+
+    if specialization_id:
+        if not slot_joined:
             query = query.join(AppointmentModel.slot)
-        query = query.where(AppointmentSlot.start_datetime >= date_from)
+        if not doctor_joined:
+            query = query.join(AppointmentSlot.doctor)
+        query = query.where(DoctorModel.specialization_id == specialization_id)
 
-    if date_to:
-        if not doctor_id and not date_from:  # если нет join
-            query = query.join(AppointmentModel.slot)
-        query = query.where(AppointmentSlot.start_datetime <= date_to)
+    if status:
+        query = query.where(AppointmentModel.status == status)
 
-    # Подгружаем связи
     query = query.options(
         selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
         selectinload(AppointmentModel.patient)
     ).offset(skip).limit(limit)
-
     result = await db.execute(query)
     appointments = result.unique().scalars().all()
 

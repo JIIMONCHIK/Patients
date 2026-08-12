@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Table, Button, Popconfirm, message, Input, Space } from 'antd';
 import { getSpecializations, createSpecialization, updateSpecialization, deleteSpecialization } from '../../api/specializations';
 import { Specialization } from '../../types';
+import { useNavigate } from 'react-router-dom';
 
 const SpecializationsList: React.FC = () => {
   const [specializations, setSpecializations] = useState<Specialization[]>([]);
@@ -9,6 +10,7 @@ const SpecializationsList: React.FC = () => {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const navigate = useNavigate();
 
   const fetch = async () => {
     setLoading(true);
@@ -59,6 +61,7 @@ const SpecializationsList: React.FC = () => {
       key: 'actions',
       render: (_: any, record: Specialization) => (
         <Space>
+          <Button type="link" onClick={() => navigate(`/appointments?specialization_id=${record.id}`)}>Приёмы</Button>
           {editingId === record.id ? (
             <>
               <Button type="link" onClick={() => handleEdit(record.id)}>Сохранить</Button>

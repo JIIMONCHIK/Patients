@@ -71,3 +71,8 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
+
+export interface Specialization {
+  id: string;
+  name: string;
+}
