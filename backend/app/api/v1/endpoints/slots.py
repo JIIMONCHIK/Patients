@@ -8,6 +8,7 @@ from app.models.slot import AppointmentSlot as AppointmentSlotModel  # ORM-мо�
 from app.api.dependencies import get_db, get_current_active_user, require_role
 from app.schemas.slot import AppointmentSlot, AppointmentSlotCreate, AppointmentSlotUpdate  # Pydantic-схемы
 from app.crud.slot import appointment_slot
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -20,11 +21,18 @@ async def read_slots(
     is_available: Optional[bool] = None,
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
-    query = select(AppointmentSlotModel)  # используем модель
+    query = select(AppointmentSlotModel)
     if doctor_id:
         query = query.where(AppointmentSlotModel.doctor_id == doctor_id)
     if is_available is not None:
         query = query.where(AppointmentSlotModel.is_available == is_available)
+    
+    # Скрываем все слоты, время начала которых уже прошло
+    query = query.where(AppointmentSlotModel.start_datetime > datetime.now(timezone.utc))
+    
+    # Сортируем по возрастанию времени
+    query = query.order_by(AppointmentSlotModel.start_datetime)
+    
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
