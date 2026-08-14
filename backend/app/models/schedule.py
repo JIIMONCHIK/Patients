@@ -13,5 +13,6 @@ class ScheduleTemplate(Base):
     day_of_week: Mapped[int] = mapped_column(Integer, nullable=False)  # 0=Пн, 6=Вс
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
+    slot_duration: Mapped[int] = mapped_column(Integer, nullable=False, default=30, server_default='30')  # в минутах
 
     doctor: Mapped["Doctor"] = relationship("Doctor", back_populates="schedule_templates")

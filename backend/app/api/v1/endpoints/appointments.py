@@ -75,6 +75,8 @@ async def read_appointments(
     if status:
         query = query.where(AppointmentModel.status == status)
 
+    query = query.order_by(AppointmentModel.created_at.desc())
+    
     query = query.options(
         selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
         selectinload(AppointmentModel.patient)

@@ -25,6 +25,7 @@ const MainLayout: React.FC = () => {
       { key: '/doctors', icon: <TeamOutlined />, label: 'Врачи' },
       { key: '/specializations', icon: <MedicineBoxOutlined />, label: 'Специализации' },
       { key: '/appointments', icon: <CalendarOutlined />, label: 'Приёмы' },
+      { key: '/schedules', icon: <CalendarOutlined />, label: 'Расписание' },
       { key: '/appointments/book', icon: <CalendarOutlined />, label: 'Записаться на приём' },
     ] : []),
     ...(user?.role === 'doctor' ? [

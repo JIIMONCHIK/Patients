@@ -110,3 +110,21 @@ export interface ProfileUpdate {
   specialization_id?: string;
   cabinet?: string;
 }
+
+export interface ScheduleTemplate {
+  id: string;
+  doctor_id: string;
+  day_of_week: number;   // 0=Пн..6=Вс
+  start_time: string;    // HH:mm
+  end_time: string;      // HH:mm
+  slot_duration: number; // минуты
+}
+
+export interface ScheduleTemplateCreate {
+  doctor_id: string;
+  days_of_week?: number[];  // массив дней 0-6
+  day_of_week?: number;     // для совместимости
+  start_time: string;
+  end_time: string;
+  slot_duration?: number;
+}

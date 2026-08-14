@@ -15,6 +15,7 @@ import AppointmentsList from './pages/Appointments/AppointmentsList';
 import MedicalRecordsList from './pages/MedicalRecords/MedicalRecordsList';
 import BookAppointment from './pages/Appointments/BookAppointment';
 import ProfilePage from './pages/Profile/ProfilePage';
+import SchedulesPage from './pages/Schedules/SchedulesPage';
 
 const App = () => {
   return (
@@ -117,6 +118,14 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['admin', 'doctor', 'patient']}>
                     <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="schedules"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'registrar']}>
+                    <SchedulesPage />
                   </ProtectedRoute>
                 }
               />
