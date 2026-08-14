@@ -63,6 +63,8 @@ export interface MedicalRecord {
   recommendations?: string;
   created_at: string;
   updated_at?: string | null;
+  patient_name?: string | null;
+  appointment_start_datetime?: string | null;
 }
 
 export interface AuthContextType {

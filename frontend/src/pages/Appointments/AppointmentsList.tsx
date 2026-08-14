@@ -9,6 +9,7 @@ import { getSpecializations } from '../../api/specializations';
 import { Appointment, Doctor, Patient, Specialization } from '../../types';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
+import MedicalRecordModal from '../MedicalRecords/MedicalRecordModal';
 
 
 const { RangePicker } = DatePicker;
@@ -33,6 +34,11 @@ const AppointmentsList: React.FC = () => {
   const [selectedSpecialization, setSelectedSpecialization] = useState<string | undefined>(undefined);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
   const [activeOnly, setActiveOnly] = useState<boolean>(false);
+
+  const [medicalRecordAppointmentId, setMedicalRecordAppointmentId] = useState<string | null>(null);
+  const openMedicalRecord = (appointmentId: string) => {
+  setMedicalRecordAppointmentId(appointmentId);
+};
 
   const { user } = useAuth();
 
@@ -168,6 +174,11 @@ const AppointmentsList: React.FC = () => {
               )}
             </>
           )}
+          {record.status === 'completed' && user?.role === 'doctor' && (
+            <Button type="link" size="small" onClick={() => openMedicalRecord(record.id)}>
+              Медзапись
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -263,6 +274,14 @@ const AppointmentsList: React.FC = () => {
         </Row>
       </Card>
       <Table dataSource={appointments} columns={columns} rowKey="id" loading={loading} />
+      {medicalRecordAppointmentId && (
+        <MedicalRecordModal
+          appointmentId={medicalRecordAppointmentId}
+          visible={!!medicalRecordAppointmentId}
+          onClose={() => setMedicalRecordAppointmentId(null)}
+          onSuccess={() => setMedicalRecordAppointmentId(null)}
+        />
+      )}
     </div>
   );
 };

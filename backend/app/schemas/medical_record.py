@@ -28,3 +28,7 @@ class MedicalRecordInDBBase(MedicalRecordBase):
 
 class MedicalRecord(MedicalRecordInDBBase):
     pass
+
+class MedicalRecordResponse(MedicalRecordInDBBase):
+    patient_name: Optional[str] = None
+    appointment_start_datetime: Optional[datetime] = None
