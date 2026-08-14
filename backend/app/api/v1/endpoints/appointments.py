@@ -76,7 +76,7 @@ async def read_appointments(
         query = query.where(AppointmentModel.status == status)
 
     query = query.order_by(AppointmentModel.created_at.desc())
-    
+
     query = query.options(
         selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
         selectinload(AppointmentModel.patient)
@@ -194,3 +194,55 @@ async def cancel_appointment(
     if not cancelled:
         raise HTTPException(status_code=400, detail="Appointment cannot be cancelled")
     return cancelled
+
+@router.post("/{appointment_id}/complete", response_model=AppointmentResponse)
+async def complete_appointment(
+    *,
+    db: AsyncSession = Depends(get_db),
+    appointment_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    appt = await db.get(AppointmentModel, appointment_id)
+    if not appt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    if current_user.role == UserRole.DOCTOR:
+        # Проверяем, что это приём данного врача
+        doctor = await db.scalar(
+            select(DoctorModel).where(DoctorModel.user_id == current_user.id)
+        )
+        if not doctor:
+            raise HTTPException(status_code=400, detail="Doctor profile not found")
+        slot = await db.get(AppointmentSlot, appt.slot_id)
+        if not slot or slot.doctor_id != doctor.id:
+            raise HTTPException(status_code=403, detail="Not your appointment")
+    elif current_user.role not in [UserRole.ADMIN, UserRole.REGISTRAR]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Меняем статус на completed
+    appt.status = AppointmentStatus.COMPLETED
+    db.add(appt)
+    await db.commit()
+    await db.refresh(appt)
+
+    # Формируем ответ с дополнительными полями (как в read)
+    result = await db.execute(
+        select(AppointmentModel)
+        .options(
+            selectinload(AppointmentModel.slot).selectinload(AppointmentSlot.doctor),
+            selectinload(AppointmentModel.patient)
+        )
+        .where(AppointmentModel.id == appointment_id)
+    )
+    a = result.scalars().first()
+    return {
+        "id": a.id,
+        "slot_id": a.slot_id,
+        "patient_id": a.patient_id,
+        "status": a.status,
+        "created_at": a.created_at,
+        "patient_name": a.patient.full_name if a.patient else None,
+        "doctor_name": a.slot.doctor.full_name if a.slot and a.slot.doctor else None,
+        "start_datetime": a.slot.start_datetime if a.slot else None,
+        "end_datetime": a.slot.end_datetime if a.slot else None,
+    }

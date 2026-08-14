@@ -13,3 +13,4 @@ export const getAppointments = (params?: {
 }) => apiClient.get('/appointments', { params });
 export const createAppointment = (data: { slot_id: string; patient_id?: string }) => apiClient.post('/appointments', data);
 export const cancelAppointment = (id: string) => apiClient.delete(`/appointments/${id}/cancel`);
+export const completeAppointment = (id: string) => apiClient.post(`/appointments/${id}/complete`);

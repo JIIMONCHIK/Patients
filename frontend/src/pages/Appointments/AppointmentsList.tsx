@@ -2,13 +2,14 @@ import { useEffect, useState, useCallback } from 'react';
 import { Table, Popconfirm, message, Space, Tag, Select, DatePicker, Row, Col,
    Card, Button, Switch } from 'antd';
 import { useSearchParams } from 'react-router-dom';
-import { getAppointments, cancelAppointment } from '../../api/appointments';
+import { getAppointments, cancelAppointment, completeAppointment } from '../../api/appointments';
 import { getDoctors } from '../../api/doctors';
 import { getPatients } from '../../api/patients';
 import { getSpecializations } from '../../api/specializations';
 import { Appointment, Doctor, Patient, Specialization } from '../../types';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
+
 
 const { RangePicker } = DatePicker;
 
@@ -110,6 +111,16 @@ const AppointmentsList: React.FC = () => {
     }
   };
 
+  const handleComplete = async (id: string) => {
+    try {
+      await completeAppointment(id);
+      message.success('Приём завершён');
+      fetchAppointments();
+    } catch (err: any) {
+      message.error(err.response?.data?.detail || 'Ошибка завершения');
+    }
+  };
+
   const columns = [
     { title: 'Пациент', dataIndex: 'patient_name', key: 'patient_name', render: (text: string) => text || '—' },
     { title: 'Врач', dataIndex: 'doctor_name', key: 'doctor_name', render: (text: string) => text || '—' },
@@ -136,9 +147,26 @@ const AppointmentsList: React.FC = () => {
       render: (_: any, record: Appointment) => (
         <Space>
           {record.status === 'booked' && (
-            <Popconfirm title="Отменить запись?" onConfirm={() => handleCancel(record.id)}>
-              <Button danger>Отменить</Button>
-            </Popconfirm>
+            <>
+              {/* Врач может завершать свои приёмы */}
+              {user?.role === 'doctor' && (
+                <Popconfirm title="Завершить приём?" onConfirm={() => handleComplete(record.id)}>
+                  <Button type="primary" size="small">Завершить</Button>
+                </Popconfirm>
+              )}
+              {/* Администратор/регистратор могут отменять */}
+              {(user?.role === 'admin' || user?.role === 'registrar') && (
+                <Popconfirm title="Отменить запись?" onConfirm={() => handleCancel(record.id)}>
+                  <Button danger>Отменить</Button>
+                </Popconfirm>
+              )}
+              {/* Пациент может отменять свои записи */}
+              {user?.role === 'patient' && (
+                <Popconfirm title="Отменить запись?" onConfirm={() => handleCancel(record.id)}>
+                  <Button danger>Отменить</Button>
+                </Popconfirm>
+              )}
+            </>
           )}
         </Space>
       ),
